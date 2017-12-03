@@ -48,15 +48,11 @@ Output:
 cv::Point2f getIntersection(cv::Point2f pt1, cv::Point2f pt2,
                             cv::Point2f img_edge)
 {
-    float x, y, m, c;
-    // get slope and y intersept of the line
-    // y = mx + c
-    m = (pt1.y - pt2.y) / (pt1.x - pt2.x);
-    c = pt1.y - (m * pt1.x);
+    float x, y;
     // point of intersection of line with horizontal edge of image
-    x = (img_edge.y - c) / m;
+    x = findX(pt1, pt2, img_edge.y);
     // point of intersection of line with verticle edge of image
-    y = (m * img_edge.x) + c;
+    y = findY(pt1, pt2, img_edge.x);
 
     cv::Point2f pt_intersect;
     // choose the farthest point of intersection on edges of the
@@ -70,6 +66,48 @@ cv::Point2f getIntersection(cv::Point2f pt1, cv::Point2f pt2,
     pt_intersect.y = y;
 
     return(pt_intersect);
+}
+
+
+/*
+Function to find x coordinate of a point for given y coordinate
+Input:
+    1. coordinates of first point on the line of type cv::Point2f
+    2. coordinates of second point on the line of type cv::Point2f
+    3. y coorindate of point whose x coordinate we want to find
+Output:
+    1. x coordinate of the point
+*/
+float findX(cv::Point2f pt1, cv::Point2f pt2, float y)
+{
+    float x, m, c;
+    // get slope and y intersept of the line: y = mx + c
+    m = (pt1.y - pt2.y) / (pt1.x - pt2.x);
+    c = pt1.y - (m * pt1.x);
+    x = (y - c) / m;
+
+    return x;
+}
+
+
+/*
+Function to find y coordinate of a point for given x coordinate
+Input:
+    1. coordinates of first point on the line of type cv::Point2f
+    2. coordinates of second point on the line of type cv::Point2f
+    3. x coorindate of point whose y coordinate we want to find
+Output:
+    1. y coordinate of the point
+*/
+float findY(cv::Point2f pt1, cv::Point2f pt2, float x)
+{
+    float y, m, c;
+    // get slope and y intersept of the line: y = mx + c
+    m = (pt1.y - pt2.y) / (pt1.x - pt2.x);
+    c = pt1.y - (m * pt1.x);
+    y = (m * x) + c;
+
+    return y;
 }
 
 
@@ -161,4 +199,160 @@ int findMax(std::vector<cv::Point2f> outer_corners, char idx)
     }
 
     return (int)round(fabs(max));
+}
+
+
+/*
+Function to get coorindates of 5 rectangles in the image
+Input:
+    1. image of type cv::Mat
+    2. corners of the calculated inner and outer rectangles
+        vector of cv::Point2f
+    3. unordered_map of vector of Point2fs in which corindates of 4
+        corners of 5 rectangles will be stored
+*/
+void getRectCoords(cv::Mat& img, std::vector<cv::Point2f>& corners,
+        std::unordered_map<std::string, std::vector<cv::Point2f>>& rectCoords)
+{
+    std::vector<cv::Point2f> inner_corners(corners.begin(), corners.begin()+4);
+    std::vector<cv::Point2f> outer_corners(corners.begin()+4, corners.begin()+8);
+    cv::Point2f vanish_pt = corners[8];
+
+
+    // get coordinates of ceiling
+    std::vector<cv::Point2f> ceiling;
+    ceiling.push_back(outer_corners[0]);
+    ceiling.push_back(outer_corners[1]);
+    ceiling.push_back(inner_corners[1]);
+    ceiling.push_back(inner_corners[0]);
+
+    // get y coords of outer corners to same height
+    if(ceiling[0].y < ceiling[1].y)
+    {
+        ceiling[0].x = findX(vanish_pt, ceiling[0], ceiling[1].y);
+        ceiling[0].y = ceiling[1].y;
+    }
+    else
+    {
+        ceiling[1].x = findX(vanish_pt, ceiling[1], ceiling[0].y);
+        ceiling[1].y = ceiling[0].y;
+    }
+
+    rectCoords["ceiling"] = ceiling;
+
+
+    // get coordinates of floor
+    std::vector<cv::Point2f> floorr;
+    floorr.push_back(inner_corners[3]);
+    floorr.push_back(inner_corners[2]);
+    floorr.push_back(outer_corners[2]);
+    floorr.push_back(outer_corners[3]);
+
+    // get y coordinates of the outer corners to same height
+    if(floorr[2].y > floorr[3].y)
+    {
+        floorr[2].x = findX(vanish_pt, floorr[2], floorr[3].y);
+        floorr[2].y = floorr[3].y;
+    }
+    else
+    {
+        floorr[3].x = findX(vanish_pt, floorr[3], floorr[2].y);
+        floorr[3].y = floorr[2].y;
+    }
+
+    rectCoords["floor"] = floorr;
+
+
+    // get coordinates of left_wall
+    std::vector<cv::Point2f> left;
+    left.push_back(outer_corners[0]);
+    left.push_back(inner_corners[0]);
+    left.push_back(inner_corners[3]);
+    left.push_back(outer_corners[3]);
+
+    // get x coordinates of the outer corners to same width
+    if(left[0].x < left[3].x)
+    {
+        left[0].y = findY(vanish_pt, left[0], left[3].x);
+        left[0].x = left[3].x;
+    }
+    else
+    {
+        left[3].y = findY(vanish_pt, left[3], left[0].x);
+        left[3].x = left[0].x;
+    }
+
+    rectCoords["left"] = left;
+
+
+    // get coordinates of right_wall
+    std::vector<cv::Point2f> right;
+    right.push_back(inner_corners[1]);
+    right.push_back(outer_corners[1]);
+    right.push_back(outer_corners[2]);
+    right.push_back(inner_corners[2]);
+
+    // get x coorindates of the outer corners to same width
+    if(right[1].x > right[2].x)
+    {
+        right[1].y = findY(vanish_pt, right[1], right[2].x);
+        right[1].x = right[2].x;
+    }
+    else
+    {
+        right[2].y = findY(vanish_pt, right[2], right[1].x);
+        right[2].x = right[1].x;
+    }
+
+    rectCoords["right"] = right;
+
+
+    // get coordinates of the back_wall
+    rectCoords["back"] = inner_corners;
+}
+
+
+/*
+Function to get coordinates of corners of face of cube
+Input:
+    1. unordered_map of vector of Point2fs in which contains coordinates of
+        corners of all the faces of the cube
+    2. vector of cv::Point2f to store the coodinates of cubeFace
+*/
+void getCubeFace(std::unordered_map<std::string,
+                std::vector<cv::Point2f>>& rectCoords,
+                std::vector<cv::Point2f>& cubeFace,
+                int& rows, int& cols)
+{
+    std::vector<cv::Point2f> tmp_vec;
+    tmp_vec.push_back(rectCoords["ceiling"][0]);
+    tmp_vec.push_back(rectCoords["floor"][3]);
+    tmp_vec.push_back(rectCoords["left"][0]);
+    int x_min = findMin(tmp_vec, 'x');
+
+    tmp_vec.clear();
+    tmp_vec.push_back(rectCoords["ceiling"][1]);
+    tmp_vec.push_back(rectCoords["floor"][2]);
+    tmp_vec.push_back(rectCoords["right"][2]);
+    int x_max = findMax(tmp_vec, 'x');
+
+    tmp_vec.clear();
+    tmp_vec.push_back(rectCoords["left"][0]);
+    tmp_vec.push_back(rectCoords["right"][1]);
+    tmp_vec.push_back(rectCoords["ceiling"][0]);
+    int y_min = findMin(tmp_vec, 'y');
+
+    tmp_vec.clear();
+    tmp_vec.push_back(rectCoords["left"][3]);
+    tmp_vec.push_back(rectCoords["right"][2]);
+    tmp_vec.push_back(rectCoords["floor"][2]);
+    int y_max = findMax(tmp_vec, 'y');
+
+    rows = y_max;
+    cols = x_max;
+
+    cubeFace.push_back(cv::Point2f(x_min, y_min));
+    cubeFace.push_back(cv::Point2f(x_max, y_min));
+    cubeFace.push_back(cv::Point2f(x_max, y_max));
+    cubeFace.push_back(cv::Point2f(x_min, y_max));
 }

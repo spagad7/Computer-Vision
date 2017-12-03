@@ -1,6 +1,6 @@
 cmake_minimum_required( VERSION 2.8 )
 project( tour_into_photo )
-set( CMAKE_CXX_STD 11)
+set( CMAKE_CXX_STANDARD 11)
 find_package( OpenCV REQUIRED )
 add_executable( tour_into_photo tour_into_photo.cpp helper.cpp)
 target_link_libraries( tour_into_photo ${OpenCV_LIBS} )
