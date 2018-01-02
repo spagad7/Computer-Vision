@@ -1,6 +1,6 @@
-# Undistort Image
+# Perspective Transform
 
-This is a program to apply perspective transform to an image to get a fronto-parallel view of the image. The steps include:
+This is a program to apply perspective transform to an image to get a fronto-parallel view of the image. The steps to transform an image include:
 
 1. calibrate camera
 2. undistort image
