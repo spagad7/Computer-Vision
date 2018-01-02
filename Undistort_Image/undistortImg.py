@@ -78,5 +78,6 @@ if __name__ == '__main__':
                                         flags=cv2.INTER_LINEAR)
         retval, corners = cv2.findChessboardCorners(img_warp, (nx, ny), None)
         cv2.drawChessboardCorners(img_warp, (nx, ny), corners, retval)
-        cv2.imshow("Warped Image", img_warp)
+        cv2.imwrite("img_undist.jpg", img_warp)
+        cv2.imshow("Undistorted Image", img_warp)
         cv2.waitKey(0)
