@@ -1,11 +1,16 @@
 # Undistort Image
 
-This is a program to calibrate camera and undistort a chessboard image using OpenCV library.
+This is a program to apply perspective transform to an image to get a fronto-parallel view of the image. The steps include:
+
+1. calibrate camera
+2. undistort image
+3. calculate perspective transform
+4. apply perspective transform to the input image
 
 [//]:  # (Image Reference)
 [image1]: dist_imgs/GOPR0034.jpg "Sample Calibration Image"
 [image2]: test_img.jpg "Sample Test Image"
-[image3]: img_undist.jpg "Sample Undistorted Image"
+[image3]: img_trans.jpg "Sample Undistorted Image"
 
 ## Usage
 This program takes 4 arguments:
@@ -16,7 +21,7 @@ This program takes 4 arguments:
 
 Example:
 ```
-    python undistortImg.py dist_imgs test_img.jpg 8 6
+    python persp_trans.py dist_imgs test_img.jpg 8 6
 ```
 
 ## Sample Calibration Image
@@ -26,6 +31,6 @@ Example:
 ![alt text][image2]
 
 ## Output
-The program displays the undistorted image and writes the image as `img_undist.jpg` in the same directory.
+The program displays the transformed image and writes the image as `img_trans.jpg` in the same directory.
 
 ![alt text][image3]

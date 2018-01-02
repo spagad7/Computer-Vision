@@ -69,15 +69,15 @@ if __name__ == '__main__':
         src_pts = np.array([corners[0], corners[nx-1],
                             corners[-1], corners[-nx]], dtype='float32')
         ofst = 100
-        scale = 135
+        scale = 120
         dst_pts = np.array([(ofst, ofst), (nx*scale+ofst, ofst),
                     (nx*scale+ofst, ny*scale+ofst),
                     (ofst, ny*scale+ofst)], dtype='float32')
         M = cv2.getPerspectiveTransform(src_pts, dst_pts)
         img_warp = cv2.warpPerspective(img_undst, M, img_undst.shape[1::-1],
                                         flags=cv2.INTER_LINEAR)
-        retval, corners = cv2.findChessboardCorners(img_warp, (nx, ny), None)
-        cv2.drawChessboardCorners(img_warp, (nx, ny), corners, retval)
-        cv2.imwrite("img_undist.jpg", img_warp)
-        cv2.imshow("Undistorted Image", img_warp)
+        #retval, corners = cv2.findChessboardCorners(img_warp, (nx, ny), None)
+        #cv2.drawChessboardCorners(img_warp, (nx, ny), corners, retval)
+        cv2.imwrite("img_trans.jpg", img_warp)
+        cv2.imshow("Transformed Image", img_warp)
         cv2.waitKey(0)
