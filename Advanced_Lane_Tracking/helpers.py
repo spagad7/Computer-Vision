@@ -1,10 +1,33 @@
 #!/usr/bin/python3
 import cv2
+import glob
 import numpy as np
 
 
+# Function to calibrate camera
+def calibrateCamera(dir_path, nx, ny):
+    img_list = glob.glob(dir_path + "/*.jpg")
+    objp = np.zeros((nx*ny, 3), dtype='float32')
+    objp[:,:2] = np.mgrid[0:nx, 0:ny].T.reshape(-1, 2)
+    img_pts = []
+    obj_pts = []
+    # Iterate through each calibration image
+    for img_name in img_list:
+        img = cv2.imread(img_name)
+        img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        retval, corners = cv2.findChessboardCorners(img_gray, (nx, ny), None)
+        if retval == True:
+            obj_pts.append(objp)
+            img_pts.append(corners)
+    # Calibrate Camera
+    retval, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(obj_pts, img_pts,
+                                        (img.shape[1], img.shape[0]),
+                                        None, None)
+    return mtx, dist
+
+
 # Function to get gradient of an image along x or y direction
-def gradient_sobel(img, orient='x', k_size=3, thresh=(0,255)):
+def gradientSobel(img, orient='x', k_size=3, thresh=(0,255)):
     img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     if(orient == 'x'):
         sobel = cv2.Sobel(img_gray, cv2.CV_64F, 1, 0, ksize=k_size)
@@ -18,7 +41,7 @@ def gradient_sobel(img, orient='x', k_size=3, thresh=(0,255)):
 
 
 # Function to get gradient magnitude of an image
-def gradient_mag(img, k_size=3, thresh=(0,255)):
+def gradientMag(img, k_size=3, thresh=(0,255)):
     img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     sobelX = cv2.Sobel(img_gray, cv2.CV_64F, 1, 0, ksize=k_size)
     sobelY = cv2.Sobel(img_gray, cv2.CV_64F, 0, 1, ksize=k_size)
@@ -32,7 +55,7 @@ def gradient_mag(img, k_size=3, thresh=(0,255)):
 
 
 # Function to get gradient direction of an image
-def gradient_dir(img, k_size=3, thresh=(0, np.pi/2)):
+def gradientDir(img, k_size=3, thresh=(0, np.pi/2)):
     img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     sobelX = cv2.Sobel(img_gray, cv2.CV_64F, 1, 0, ksize=k_size)
     sobelY = cv2.Sobel(img_gray, cv2.CV_64F, 0, 1, ksize=k_size)
@@ -42,3 +65,40 @@ def gradient_dir(img, k_size=3, thresh=(0, np.pi/2)):
     sobel_thresh = np.zeros_like(sobel_dir)
     sobel_thresh[(sobel_dir >= thresh[0]) & (sobel_dir <= thresh[1])] = 255
     return sobel_thresh
+
+
+# Function to get color based threshold of an image
+# The s channel in HLS is good for identifying staturated bright yellow lanes
+# The l channel in HLS is good for identifying very bright white lanes
+def colorThreshold(img, thresh):
+    img_hls = cv2.cvtColor(img, cv2.COLOR_BGR2HLS)
+    img_h = img_hls[:,:,0]
+    img_l = img_hls[:,:,1]
+    img_s = img_hls[:,:,2]
+
+    img_thresh = np.zeros_like(img_s)
+    cond_y_h = (img_h > thresh['hue_y'][0]) & (img_h <= thresh['hue_y'][1])
+    cond_y_l = (img_l > thresh['light_y'][0]) & (img_l <= thresh['light_y'][1])
+    cond_y_s = (img_s > thresh['sat_y'][0]) & (img_s <= thresh['sat_y'][1])
+    cond_w_h = (img_h > thresh['hue_w'][0]) & (img_h <= thresh['hue_w'][1])
+    cond_w_l = (img_l > thresh['light_w'][0]) & (img_l <= thresh['light_w'][1])
+    cond_w_s = (img_s > thresh['sat_w'][0]) & (img_s <= thresh['sat_w'][1])
+    cond_w2_h = (img_h > thresh['hue_w2'][0]) & (img_h <= thresh['hue_w2'][1])
+    cond_w2_l = (img_l > thresh['light_w2'][0]) & (img_l <= thresh['light_w2'][1])
+    cond_w2_s = (img_s > thresh['sat_w2'][0]) & (img_s <= thresh['sat_w2'][1])
+    img_thresh[(cond_y_h & cond_y_l & cond_y_s) |
+                (cond_w_h & cond_w_l & cond_w_s) |
+                (cond_w2_h & cond_w2_l & cond_w2_s)] = 255
+    return  img_thresh
+
+
+# Function to convert 3 channel image to binary image using gradient and color
+# based thresholding
+def convertToBinary(img, thresh):
+    #img_sobel = gradientSobel(img, thresh['sobel'])
+    #img_mag = gradientMag(img, thresh['mag'])
+    #img_dir = gradientDir(img, thresh['dir'])
+    #img_color = colorThreshold(img, thresh['color'])
+
+    img_color = colorThreshold(img, thresh)
+    return img_color
