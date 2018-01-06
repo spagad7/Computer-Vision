@@ -4,28 +4,6 @@ import glob
 import numpy as np
 
 
-# Function to calibrate camera
-def calibrateCamera(dir_path, nx, ny):
-    img_list = glob.glob(dir_path + "/*.jpg")
-    objp = np.zeros((nx*ny, 3), dtype='float32')
-    objp[:,:2] = np.mgrid[0:nx, 0:ny].T.reshape(-1, 2)
-    img_pts = []
-    obj_pts = []
-    # Iterate through each calibration image
-    for img_name in img_list:
-        img = cv2.imread(img_name)
-        img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-        retval, corners = cv2.findChessboardCorners(img_gray, (nx, ny), None)
-        if retval == True:
-            obj_pts.append(objp)
-            img_pts.append(corners)
-    # Calibrate Camera
-    retval, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(obj_pts, img_pts,
-                                        (img.shape[1], img.shape[0]),
-                                        None, None)
-    return mtx, dist
-
-
 # Function to get gradient of an image along x or y direction
 def gradientSobel(img, orient='x', k_size=3, thresh=(0,255)):
     img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)

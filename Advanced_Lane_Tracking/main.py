@@ -5,33 +5,55 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 from helpers import *
+from calibration import *
 
 if __name__ == '__main__':
     # Parse Arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument('calib_path',
+    parser.add_argument('-c',
+                        type=str,
+                        help='path to calibration file')
+    parser.add_argument('-p',
                         type=str,
                         help='path to calibration images')
-    parser.add_argument('nx',
+    parser.add_argument('-nx',
                         type=int,
                         help='number of inner corners along x direction')
-    parser.add_argument('ny',
+    parser.add_argument('-ny',
                         type=int,
                         help='number of inner corners along y direction')
-    parser.add_argument('img_path',
+    parser.add_argument('-i',
                         type=str,
                         help='path to image file')
+    parser.add_argument('-v',
+                        type=str,
+                        help='path to video file')
     args = parser.parse_args()
 
-    mtx, dist = calibrateCamera(args.calib_path, args.nx, args.ny)
-    # Read test image
-    img = cv2.imread(args.img_path)
-    # Undistort image
-    img_undst = cv2.undistort(img, mtx, dist, None, mtx)
-    # Apply color and gradient threshold to the image
-    thresh = {#'sobel' : (20, 100),
-              #'mag' : (20, 100),
-              #'dir' : (0.7, 1.3),
+    # Error checking
+    if(args.c == None and args.p == None):
+        print("Insufficient arguments: either calib file or path to calib\
+                images must be speicified!")
+        quit()
+    elif(args.p != None and (args.c == None or args.nx == None
+        or args.ny == None)):
+        print("Insufficient arguments: must specify calib file name, nx and ny")
+        quit()
+
+    if(args.i == None and args.v == None):
+        print("Insufficient arguments: either image or video file must be\
+                specified!")
+        quit()
+
+    # Calibrate Camera
+    if args.p != None:
+        mtx, dist = calibrateCamera(args.p, args.nx, args.ny)
+        saveCalibData(args.c, mtx, dist)
+    elif args.c != None and args.p == None:
+        mtx, dist = loadCalibData(args.c)
+
+    # Set threshold values
+    thresh = {
               'hue_y' : (18, 30),
               'sat_y' : (20, 255),
               'light_y' : (60, 255),
@@ -41,7 +63,17 @@ if __name__ == '__main__':
               'hue_w2' : (0, 180),
               'sat_w2' : (0, 255),
               'light_w2' : (200, 255)}
-    img_bin = convertToBinary(img_undst, thresh)
+
+    # This is temporary, will be removed after debugging
+    # Read test image
+    if args.i != None:
+        img = cv2.imread(args.i)
+        # Undistort image
+        img_undst = cv2.undistort(img, mtx, dist, None, mtx)
+
+        # Apply color and gradient threshold to the image
+        img_bin = convertToBinary(img_undst, thresh)
+
 
     # Plot the result
     f, (ax1, ax2) = plt.subplots(1, 2, figsize=(24, 9))
