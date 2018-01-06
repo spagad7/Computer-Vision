@@ -20,7 +20,7 @@ def gradientSobel(img, orient='x', k_size=3, thresh=(0,255)):
 
 # Function to get gradient magnitude of an image
 def gradientMag(img, k_size=3, thresh=(0,255)):
-    img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    img_gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
     sobelX = cv2.Sobel(img_gray, cv2.CV_64F, 1, 0, ksize=k_size)
     sobelY = cv2.Sobel(img_gray, cv2.CV_64F, 0, 1, ksize=k_size)
     sobelX_abs = np.absolute(sobelX)
@@ -34,7 +34,7 @@ def gradientMag(img, k_size=3, thresh=(0,255)):
 
 # Function to get gradient direction of an image
 def gradientDir(img, k_size=3, thresh=(0, np.pi/2)):
-    img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    img_gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
     sobelX = cv2.Sobel(img_gray, cv2.CV_64F, 1, 0, ksize=k_size)
     sobelY = cv2.Sobel(img_gray, cv2.CV_64F, 0, 1, ksize=k_size)
     sobelX_abs = np.absolute(sobelX)
@@ -75,4 +75,4 @@ def convertToBinary(img, thresh):
 
     img_thresh = np.zeros_like(img_sobel)
     img_thresh[(img_sobel == 255) | (img_color == 255)] = 255
-    return img_color
+    return img_thresh
