@@ -6,7 +6,7 @@ import numpy as np
 
 # Function to get gradient of an image along x or y direction
 def gradientSobel(img, orient='x', k_size=3, thresh=(0,255)):
-    img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    img_gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
     if(orient == 'x'):
         sobel = cv2.Sobel(img_gray, cv2.CV_64F, 1, 0, ksize=k_size)
     elif(orient == 'y'):
@@ -49,7 +49,7 @@ def gradientDir(img, k_size=3, thresh=(0, np.pi/2)):
 # The s channel in HLS is good for identifying staturated bright yellow lanes
 # The l channel in HLS is good for identifying very bright white lanes
 def colorThreshold(img, thresh):
-    img_hls = cv2.cvtColor(img, cv2.COLOR_BGR2HLS)
+    img_hls = cv2.cvtColor(img, cv2.COLOR_RGB2HLS)
     img_h = img_hls[:,:,0]
     img_l = img_hls[:,:,1]
     img_s = img_hls[:,:,2]
@@ -58,25 +58,21 @@ def colorThreshold(img, thresh):
     cond_y_h = (img_h > thresh['hue_y'][0]) & (img_h <= thresh['hue_y'][1])
     cond_y_l = (img_l > thresh['light_y'][0]) & (img_l <= thresh['light_y'][1])
     cond_y_s = (img_s > thresh['sat_y'][0]) & (img_s <= thresh['sat_y'][1])
-    cond_w_h = (img_h > thresh['hue_w'][0]) & (img_h <= thresh['hue_w'][1])
+    cond_w_h = (img_h > thresh['hue_w'][0]) & (img_h <= thresh['hue_w'][1]) \
+                & (img_h != 150)
     cond_w_l = (img_l > thresh['light_w'][0]) & (img_l <= thresh['light_w'][1])
     cond_w_s = (img_s > thresh['sat_w'][0]) & (img_s <= thresh['sat_w'][1])
-    cond_w2_h = (img_h > thresh['hue_w2'][0]) & (img_h <= thresh['hue_w2'][1])
-    cond_w2_l = (img_l > thresh['light_w2'][0]) & (img_l <= thresh['light_w2'][1])
-    cond_w2_s = (img_s > thresh['sat_w2'][0]) & (img_s <= thresh['sat_w2'][1])
     img_thresh[(cond_y_h & cond_y_l & cond_y_s) |
-                (cond_w_h & cond_w_l & cond_w_s) |
-                (cond_w2_h & cond_w2_l & cond_w2_s)] = 255
+                (cond_w_h & cond_w_l & cond_w_s)] = 255
     return  img_thresh
 
 
 # Function to convert 3 channel image to binary image using gradient and color
 # based thresholding
 def convertToBinary(img, thresh):
-    #img_sobel = gradientSobel(img, thresh['sobel'])
-    #img_mag = gradientMag(img, thresh['mag'])
-    #img_dir = gradientDir(img, thresh['dir'])
-    #img_color = colorThreshold(img, thresh['color'])
-
+    img_sobel = gradientSobel(img, orient='x', thresh=thresh['sobel'])
     img_color = colorThreshold(img, thresh)
+
+    img_thresh = np.zeros_like(img_sobel)
+    img_thresh[(img_sobel == 255) | (img_color == 255)] = 255
     return img_color

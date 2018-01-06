@@ -26,13 +26,6 @@ def colorThreshold(img, channel, thresh=(0, 255)):
         elif(channel == 's'):
             img_ch = img_hls[:,:,2]
 
-    elif channel == 'hsl':
-        img_hls = cv2.cvtColor(img, cv2.COLOR_BGR2HLS)
-        img_h = img_hls[:,:,0]
-        img_s = img_hls[:,:,1]
-        img_l = img_hls[:,:,2]
-        
-
     img_scaled = np.uint8((img_ch * 255)/np.max(img_ch))
 
     img_thresh = np.zeros_like(img_scaled)
@@ -98,8 +91,8 @@ parser.add_argument('t_high',
 args = parser.parse_args()
 
 img = mpimg.imread(args.img_path)
-img_thresh = colorThreshold(img, args.channel, (args.t_low, args.t_high))
-#img_thresh = gradientSobel(img, thresh=(args.t_low, args.t_high))
+##img_thresh = colorThreshold(img, args.channel, (args.t_low, args.t_high))
+img_thresh = gradientSobel(img, thresh=(args.t_low, args.t_high))
 #img_thresh = gradientMag(img, thresh=(args.t_low, args.t_high))
 #img_thresh = gradientDir(img, thresh=(args.t_low, args.t_high))
 #img_thresh = colorThreshold(img, args.channel, (args.t_low, args.t_high))

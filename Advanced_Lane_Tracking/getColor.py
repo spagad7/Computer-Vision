@@ -19,12 +19,12 @@ def getColor(event, x, y, flags, userdata):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('img_path',
+    parser.add_argument('i',
                         type=str,
                         help='path to image file')
     args = parser.parse_args()
 
-    img = cv2.imread(args.img_path)
+    img = cv2.imread(args.i)
 
     cv2.namedWindow("Color Picker", flags=cv2.WINDOW_AUTOSIZE)
     cv2.setMouseCallback("Color Picker", getColor, 0)
