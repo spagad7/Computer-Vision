@@ -70,9 +70,11 @@ def colorThreshold(img, thresh):
 # Function to convert 3 channel image to binary image using gradient and color
 # based thresholding
 def convertToBinary(img, thresh):
-    img_sobel = gradientSobel(img, orient='x', thresh=thresh['sobel'])
+    #img_grad = gradientSobel(img, orient='x', thresh=thresh['sobel'])
+    img_grad_mag = gradientMag(img, thresh=thresh['mag'])
+    #img_grad_dir = gradientDir(img, thresh=thresh['dir'])
     img_color = colorThreshold(img, thresh)
 
-    img_thresh = np.zeros_like(img_sobel)
-    img_thresh[(img_sobel == 255) | (img_color == 255)] = 255
+    img_thresh = np.zeros_like(img_grad_mag)
+    img_thresh[(img_grad_mag == 255) | (img_color == 255)] = 255
     return img_thresh

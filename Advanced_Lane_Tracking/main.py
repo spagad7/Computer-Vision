@@ -7,6 +7,8 @@ import matplotlib.image as mpimg
 from moviepy.editor import VideoFileClip
 from calibration import *
 from threshold import *
+from perspective import *
+from lanes import *
 
 if __name__ == '__main__':
     # Parse Arguments
@@ -53,9 +55,10 @@ if __name__ == '__main__':
     elif args.c != None and args.p == None:
         mtx, dist = loadCalibData(args.c)
 
+    '''
     # Set threshold values
     thresh = {
-              'sobel' : (20, 255),
+              'sobel' : (20, 100),
               'hue_y' : (17, 30),
               'sat_y' : (30, 255),
               'light_y' : (0, 255),
@@ -64,17 +67,31 @@ if __name__ == '__main__':
               'light_w' : (180, 255),
               }
     '''
+
+    # Set threshold values
     thresh = {
-              'hue_y' : (18, 30),
-              'sat_y' : (20, 255),
-              'light_y' : (160, 255),
-              'hue_w' : (100, 110),
-              'sat_w' : (10, 60),
-              'light_w' : (130, 255),
-              'hue_w2' : (0, 180),
-              'sat_w2' : (0, 255),
-              'light_w2' : (200, 255)}
-    '''
+              'sobel' : (65, 100),
+              'mag' : (30, 100),
+              'dir' : (1.1, 1.3),
+              'hue_y' : (17, 30),
+              'sat_y' : (160, 255),
+              'light_y' : (200, 255),
+              'hue_w' : (0, 0),
+              'sat_w' : (0, 0),
+              'light_w' : (0, 0),
+              }
+
+
+    # Set transform coords
+    trans_src = np.array([[535,32], [760,32],
+                          [1120,200], [170,200]],
+                           dtype='float32')
+    offset = 10
+    w = 200
+    h = 400
+    trans_dst = np.array([[offset, offset], [w+offset, offset],
+                              [w+offset,h+offset], [offset,h+offset]],
+                               dtype='float32')
 
     # This is temporary, will be removed after debugging
     # Read test image
@@ -98,13 +115,28 @@ if __name__ == '__main__':
     if args.v != None:
         print(args.v)
         video = VideoFileClip(args.v)
-        cv2.namedWindow("Output", flags=cv2.WINDOW_AUTOSIZE)
+        cv2.namedWindow("Binary", flags=cv2.WINDOW_AUTOSIZE)
+        cv2.namedWindow("Top-Down", flags=cv2.WINDOW_AUTOSIZE)
 
+        #i = 0
         for frame in video.iter_frames():
             # Undistort frame
             frame_undst = cv2.undistort(frame, mtx, dist, None, mtx)
+            # Crop the image
+            top = 435
+            bottom = 75
+            h = frame_undst.shape[0]
+            frame_crop = frame_undst[top:h-bottom, :]
             # Binarize frame
-            frame_bin = convertToBinary(frame_undst, thresh)
-            # Display
-            cv2.imshow("Output", frame_bin)
+            frame_bin = convertToBinary(frame_crop, thresh)
+            #img_name = "videos/cropped2/img" + str(i) + ".png"
+            #i = i + 1
+            #cv2.imwrite(img_name, frame_bin)
+            cv2.imshow("Binary", frame_bin)
+            # Get top-down view of image
+            frame_td = transformImage(frame_bin, trans_src, trans_dst)
+            #cv2.imshow("Top-Down", frame_td)
+            # Detect lanes
+            img_lanes = detectLanes(frame_td)
+            cv2.imshow("Top-Down", img_lanes)
             cv2.waitKey(1)
